@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkRoutes, route } from "./routing.ts";
+import { unstable_readConfig } from "wrangler";
+import { route, type Routes } from "./routing.ts";
 
 const domain = "zagrajmy.net";
-const routes = checkRoutes(
-  { piotr: ["p@example.com"], radek: ["r@example.org"], "*": ["p@example.com", "r@example.org"] },
-  domain,
-);
+const routes: Routes = { piotr: ["p@example.com"], radek: ["r@example.org"], "*": ["p@example.com", "r@example.org"] };
 const run = (...recipients: string[]) => Object.fromEntries(route({ recipients, routes, domain }));
 
 test("named alias goes only to its owner", () => {
@@ -44,10 +42,15 @@ test("lookalike domains don't match", () => {
   assert.deepEqual(run("piotr@notzagrajmy.net"), { "p@example.com": "postmaster", "r@example.org": "postmaster" });
 });
 
-test("routes without catch-all are rejected", () => {
-  assert.throws(() => checkRoutes({ piotr: ["p@example.com"] }, domain), /catch-all/);
+test("local parts that can't be a From address fall back to postmaster", () => {
+  assert.deepEqual(run("+promo@zagrajmy.net", '"a b"@zagrajmy.net'), { "p@example.com": "postmaster", "r@example.org": "postmaster" });
 });
 
-test("routes forwarding back into our domain are rejected", () => {
-  assert.throws(() => checkRoutes({ "*": ["Kontakt@Zagrajmy.net"] }, domain), /loop/);
+test("deployed ROUTES have a catch-all and never forward back into our domain", () => {
+  const { DOMAIN, ROUTES } = unstable_readConfig({ config: "wrangler.jsonc" }).vars as { DOMAIN: string; ROUTES: Routes };
+  assert.ok(ROUTES["*"].length);
+  for (const destination of Object.values(ROUTES).flat()) {
+    assert.match(destination, /^[^@\s]+@[^@\s]+$/);
+    assert.ok(!destination.toLowerCase().endsWith(`@${DOMAIN}`), `${destination} loops`);
+  }
 });

@@ -34,10 +34,10 @@ pnpm dev         # needs .dev.vars with the two secrets
 ```sh
 pnpm wrangler secret put RESEND_API_KEY        # full access: receiving API + send
 pnpm wrangler secret put RESEND_WEBHOOK_SECRET # from the Resend webhook page
-pnpm deploy
+pnpm wrangler deploy   # not `pnpm deploy`: that's pnpm's own command
 ```
 
-Resend → Webhooks → add endpoint `https://posta.<subdomain>.workers.dev`,
+Resend → Webhooks → add endpoint `https://posta.zagrajmy.net`,
 event `email.received`. Logs: Cloudflare → Workers → posta → Logs.
 
 Before touching DNS, test end-to-end by mailing `anything@<id>.resend.app`

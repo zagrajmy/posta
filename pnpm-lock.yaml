@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      postal-mime:
+        specifier: 2.7.6
+        version: 2.7.6
       resend:
         specifier: 6.32.0
         version: 6.32.0

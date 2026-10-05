@@ -5,6 +5,7 @@
   "compatibility_date": "2026-10-01",
   "account_id": "add2b427b034a6073f63a849af7de160",
   "observability": { "enabled": true },
+  "routes": [{ "pattern": "posta.zagrajmy.net", "custom_domain": true }],
   "vars": {
     "DOMAIN": "zagrajmy.net",
     // Local part → destinations; "*" is the catch-all.

@@ -1,17 +1,5 @@
 /** Local part → destination addresses. `"*"` is the catch-all. */
-export type Routes = Record<string, string[]>;
-
-export function checkRoutes(routes: unknown, domain: string): Routes {
-  if (typeof routes !== "object" || routes === null) throw new Error("ROUTES must be an object");
-  for (const [local, destinations] of Object.entries(routes)) {
-    if (!Array.isArray(destinations) || !destinations.every((d) => typeof d === "string" && d.includes("@")))
-      throw new Error(`ROUTES.${local} must be an array of email addresses`);
-    for (const d of destinations)
-      if (d.toLowerCase().endsWith(`@${domain}`)) throw new Error(`ROUTES.${local} → ${d} would loop back into ${domain}`);
-  }
-  if (!(routes as Routes)["*"]?.length) throw new Error('ROUTES needs a non-empty "*" catch-all');
-  return routes as Routes;
-}
+export type Routes = { "*": readonly string[] } & Record<string, readonly string[]>;
 
 /** Destination → local part it was addressed to, one entry per destination. */
 export function route({ recipients, routes, domain }: { recipients: string[]; routes: Routes; domain: string }) {
@@ -19,12 +7,13 @@ export function route({ recipients, routes, domain }: { recipients: string[]; ro
   const locals = recipients
     .map((r) => (/<([^>]*)>/.exec(r)?.[1] ?? r).trim().toLowerCase())
     .filter((r) => r.endsWith(suffix))
-    .map((r) => r.slice(0, -suffix.length).split("+")[0]!);
+    .map((r) => r.slice(0, -suffix.length).split("+")[0]!)
+    .map((local) => (/^[a-z0-9._-]+$/.test(local) ? local : "postmaster"));
   if (!locals.length) locals.push("postmaster");
 
   const out = new Map<string, string>();
   for (const local of locals)
-    for (const destination of Object.hasOwn(routes, local) ? routes[local]! : routes["*"]!)
+    for (const destination of Object.hasOwn(routes, local) ? routes[local]! : routes["*"])
       if (!out.has(destination)) out.set(destination, local);
   return out;
 }
