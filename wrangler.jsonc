@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "posta",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "account_id": "add2b427b034a6073f63a849af7de160",
+  "observability": { "enabled": true },
+  "vars": { "DOMAIN": "zagrajmy.net" },
+  // Secrets: RESEND_API_KEY, RESEND_WEBHOOK_SECRET, ROUTES (see README).
+  "secrets": { "required": ["RESEND_API_KEY", "RESEND_WEBHOOK_SECRET", "ROUTES"] }
+}

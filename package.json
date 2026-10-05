@@ -1,0 +1,19 @@
+{
+  "name": "posta",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test 'src/*.test.ts'",
+    "typecheck": "wrangler types && tsc"
+  },
+  "dependencies": {
+    "resend": "6.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2",
+    "wrangler": "4.147.0"
+  }
+}
