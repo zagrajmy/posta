@@ -61,7 +61,7 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
           path: a.download_url,
           filename: a.filename,
           contentType: a.content_type,
-          contentId: a.content_id ?? undefined,
+          contentId: a.content_id?.replace(/^<|>$/g, "") || undefined,
         }))
       : undefined,
     headers: threading(email),
@@ -75,6 +75,13 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
 
   const deliveries = await Promise.allSettled(
     [...destinations].map(async ([to, local]) => {
+      const done = `${emailId}/${to}`;
+      if (await env.SENT.get(done)) {
+        console.log({ event: "already_forwarded", ...meta, local, destination: to });
+        return;
+      }
+      const markDone = (how: string) => env.SENT.put(done, how, { expirationTtl: 7 * 24 * 60 * 60 });
+
       const sent = await resend.emails.send(
         { ...message, from: `${phrase(`${senderName} via Zagrajmy`)} <${local}@${env.DOMAIN}>`, to },
         { idempotencyKey: `forward/${emailId}/${to}` },
@@ -83,6 +90,7 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
       if (result === "retry") throw new Error(`send ${emailId} → ${to}: ${sent.error?.message}`);
       if (result === "sent") {
         console.log({ event: "forwarded", ...meta, local, destination: to, sentId: sent.data?.id ?? sent.error?.name });
+        await markDone("forwarded");
         return;
       }
 
@@ -101,6 +109,7 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
         { idempotencyKey: `notice/${emailId}/${to}` },
       );
       if (outcome(notice.error) !== "sent") throw new Error(`notice ${emailId} → ${to}: ${notice.error?.message}`);
+      await markDone("noticed");
     }),
   );
   const failure = deliveries.find((d) => d.status === "rejected");

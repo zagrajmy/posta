@@ -10,8 +10,9 @@ message to its owners.
 - Attachments and inline images go through as Resend-fetched URLs; their bytes
   never pass through the Worker.
 - DMARC failures are dropped. They stay visible in Resend → Emails → Receiving.
-- Transient errors return 500 so Resend retries. Idempotency keys stop
-  duplicates. Permanent errors (for example, over 40 MB) send the recipient a
+- Transient errors return 500 so Resend retries. A KV record per
+  destination (`SENT`, kept 7 days) stops duplicates; Resend's own
+  idempotency keys alone let one through on replay. Permanent errors (for example, over 40 MB) send the recipient a
   notice instead.
 
 ## Routing

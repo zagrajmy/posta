@@ -6,6 +6,7 @@
   "account_id": "add2b427b034a6073f63a849af7de160",
   "observability": { "enabled": true },
   "routes": [{ "pattern": "posta.zagrajmy.net", "custom_domain": true }],
+  "kv_namespaces": [{ "binding": "SENT", "id": "ec2ccaa24f1f4d96a8b4eb0c8e84814e" }],
   "vars": {
     "DOMAIN": "zagrajmy.net",
     // Local part → destinations; "*" is the catch-all.
