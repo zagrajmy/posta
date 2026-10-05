@@ -68,7 +68,8 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
   };
 
   const destinations = route({
-    recipients: [...email.to, ...(email.cc ?? []), ...(email.bcc ?? []), ...email.received_for],
+    // NOTE: Resend files one received email per envelope recipient; Cc'd addresses get their own copy.
+    recipients: [...email.received_for, ...email.to],
     routes: env.ROUTES,
     domain: env.DOMAIN,
   });
