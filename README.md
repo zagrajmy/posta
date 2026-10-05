@@ -16,19 +16,9 @@ message to its owners.
 
 ## Routing
 
-`ROUTES` secret, JSON: local part → destinations, `"*"` is the catch-all.
-Case and `+tags` are ignored. Destinations on `zagrajmy.net` are rejected
-(loop).
-
-```json
-{
-  "piotr": ["piotr@example.com"],
-  "radek": ["radek@example.com"],
-  "*": ["piotr@example.com", "radek@example.com"]
-}
-```
-
-Kept out of the repo so personal inboxes don't get scraped.
+`vars.ROUTES` in `wrangler.jsonc`: local part → destinations, `"*"` is the
+catch-all. Case and `+tags` are ignored. Destinations on `zagrajmy.net` are
+rejected (loop).
 
 ## Develop
 
@@ -36,7 +26,7 @@ Kept out of the repo so personal inboxes don't get scraped.
 pnpm install
 pnpm test        # routing
 pnpm typecheck
-pnpm dev         # needs .dev.vars with the three secrets
+pnpm dev         # needs .dev.vars with the two secrets
 ```
 
 ## Deploy
@@ -44,7 +34,6 @@ pnpm dev         # needs .dev.vars with the three secrets
 ```sh
 pnpm wrangler secret put RESEND_API_KEY        # full access: receiving API + send
 pnpm wrangler secret put RESEND_WEBHOOK_SECRET # from the Resend webhook page
-pnpm wrangler secret put ROUTES
 pnpm deploy
 ```
 

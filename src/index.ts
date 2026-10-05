@@ -1,5 +1,5 @@
 import { Resend, type GetReceivingEmailResponseSuccess } from "resend";
-import { parseRoutes, route } from "./routing.ts";
+import { checkRoutes, route } from "./routing.ts";
 
 // NOTE: the API returns `authentication`; resend@6 types don't declare it yet.
 type ReceivedEmail = GetReceivingEmailResponseSuccess & {
@@ -36,7 +36,7 @@ export default {
 
 async function forward({ resend, env, emailId }: { resend: Resend; env: Env; emailId: string }) {
   const domain = env.DOMAIN;
-  const routes = parseRoutes(env.ROUTES, domain);
+  const routes = checkRoutes(env.ROUTES, domain);
 
   const got = await resend.emails.receiving.get(emailId, { html_format: "cid" });
   if (got.error) throw new Error(`get ${emailId}: ${got.error.message}`);

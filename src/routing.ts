@@ -1,9 +1,8 @@
 /** Local part → destination addresses. `"*"` is the catch-all. */
 export type Routes = Record<string, string[]>;
 
-export function parseRoutes(json: string, domain: string): Routes {
-  const routes: unknown = JSON.parse(json);
-  if (typeof routes !== "object" || routes === null) throw new Error("ROUTES must be a JSON object");
+export function checkRoutes(routes: unknown, domain: string): Routes {
+  if (typeof routes !== "object" || routes === null) throw new Error("ROUTES must be an object");
   for (const [local, destinations] of Object.entries(routes)) {
     if (!Array.isArray(destinations) || !destinations.every((d) => typeof d === "string" && d.includes("@")))
       throw new Error(`ROUTES.${local} must be an array of email addresses`);

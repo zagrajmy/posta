@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseRoutes, route } from "./routing.ts";
+import { checkRoutes, route } from "./routing.ts";
 
 const domain = "zagrajmy.net";
-const routes = parseRoutes(
-  JSON.stringify({ piotr: ["p@example.com"], radek: ["r@example.org"], "*": ["p@example.com", "r@example.org"] }),
+const routes = checkRoutes(
+  { piotr: ["p@example.com"], radek: ["r@example.org"], "*": ["p@example.com", "r@example.org"] },
   domain,
 );
 const run = (...recipients: string[]) => Object.fromEntries(route({ recipients, routes, domain }));
@@ -45,9 +45,9 @@ test("lookalike domains don't match", () => {
 });
 
 test("routes without catch-all are rejected", () => {
-  assert.throws(() => parseRoutes(JSON.stringify({ piotr: ["p@example.com"] }), domain), /catch-all/);
+  assert.throws(() => checkRoutes({ piotr: ["p@example.com"] }, domain), /catch-all/);
 });
 
 test("routes forwarding back into our domain are rejected", () => {
-  assert.throws(() => parseRoutes(JSON.stringify({ "*": ["Kontakt@Zagrajmy.net"] }), domain), /loop/);
+  assert.throws(() => checkRoutes({ "*": ["Kontakt@Zagrajmy.net"] }, domain), /loop/);
 });
