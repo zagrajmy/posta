@@ -75,7 +75,7 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
         subject,
         ...(email.html
           ? { html: email.html, text: email.text ?? undefined }
-          : { text: email.text ?? "(pusta wiadomość)" }),
+          : { text: email.text ?? "(empty message)" }),
         attachments: attachments.length ? attachments : undefined,
         headers: threading(email),
       },
@@ -92,11 +92,11 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
       {
         from: `Zagrajmy <postmaster@${domain}>`,
         to,
-        subject: `Nie udało się przekazać: ${subject}`,
+        subject: `Couldn't forward: ${subject}`,
         text: [
-          `Wiadomość od ${sender} do ${local}@${domain} nie mogła zostać przekazana.`,
-          `Powód: ${sent.error.message}`,
-          `Oryginał jest w panelu Resend → Emails → Receiving (id: ${emailId}).`,
+          `A message from ${sender} to ${local}@${domain} couldn't be forwarded.`,
+          `Reason: ${sent.error.message}`,
+          `The original is in Resend → Emails → Receiving (id: ${emailId}).`,
         ].join("\n"),
       },
       { idempotencyKey: `notice/${emailId}/${to}` },
