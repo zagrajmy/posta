@@ -32,11 +32,19 @@ pnpm dev         # needs .dev.vars with the two secrets
 
 ## Deploy
 
+Pushing to `main` deploys. Cloudflare Workers Builds runs `pnpm typecheck &&
+pnpm test`, then `pnpm wrangler deploy` (Cloudflare → Workers → posta →
+Settings → Builds; `NODE_VERSION=24` is set there).
+
+Secrets live only on the Worker:
+
 ```sh
 pnpm wrangler secret put RESEND_API_KEY        # full access: receiving API + send
 pnpm wrangler secret put RESEND_WEBHOOK_SECRET # from the Resend webhook page
-pnpm wrangler deploy   # not `pnpm deploy`: that's pnpm's own command
 ```
+
+Deploying from a laptop still works with `pnpm wrangler deploy` (not
+`pnpm deploy`, which is pnpm's own command).
 
 Resend → Webhooks → add endpoint `https://posta.zagrajmy.net`,
 event `email.received`. Logs: Cloudflare → Workers → posta → Logs.
