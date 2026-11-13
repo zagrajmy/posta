@@ -14,7 +14,9 @@
       "piotr": ["hasparus@gmail.com"],
       "radek": ["radoslaw@ganczarek.in"],
       "*": ["hasparus@gmail.com", "radoslaw@ganczarek.in"]
-    }
+    },
+    // Mail to staff@ is also posted here, for the staff case inbox.
+    "STAFF_MAIL_HOOK": "https://zagrajmy.net/hooks/staff-mail"
   },
-  "secrets": { "required": ["RESEND_API_KEY", "RESEND_WEBHOOK_SECRET"] }
+  "secrets": { "required": ["RESEND_API_KEY", "RESEND_WEBHOOK_SECRET", "STAFF_MAIL_WEBHOOK_SECRET"] }
 }

@@ -1,6 +1,7 @@
 import { addressParser } from "postal-mime";
 import { Resend, type ErrorResponse, type GetReceivingEmailResponseSuccess } from "resend";
-import { route } from "./routing.ts";
+import { locals, route } from "./routing.ts";
+import { handOff, STAFF } from "./staff-mail.ts";
 
 // NOTE: the API returns `authentication`; resend@6 types don't declare it yet.
 type ReceivedEmail = GetReceivingEmailResponseSuccess & {
@@ -30,12 +31,15 @@ export default {
     }
     if (event.type !== "email.received") return new Response(null, { status: 204 });
 
-    await forward({ resend, env, emailId: event.data.email_id });
+    await receive({ resend, env, emailId: event.data.email_id });
     return new Response(null, { status: 204 });
   },
 } satisfies ExportedHandler<Env>;
 
-async function forward({ resend, env, emailId }: { resend: Resend; env: Env; emailId: string }) {
+type Meta = { emailId: string; from: string; to: string[]; subject: string };
+
+/** Forwarding and the staff hand-off each run to the end; the first failure then asks Resend to retry. */
+async function receive({ resend, env, emailId }: { resend: Resend; env: Env; emailId: string }) {
   const got = await resend.emails.receiving.get(emailId, { html_format: "cid" });
   if (got.error) throw new Error(`get ${emailId}: ${got.error.message}`);
   const email = got.data as ReceivedEmail;
@@ -46,6 +50,29 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
     return;
   }
 
+  // NOTE: Resend files one received email per envelope recipient; Cc'd addresses get their own copy.
+  const recipients = [...email.received_for, ...email.to];
+  const jobs = [forward({ resend, env, email, recipients, meta })];
+  if (locals({ recipients, domain: env.DOMAIN }).includes(STAFF))
+    jobs.push(handOff({ env, emailId, rawUrl: email.raw?.download_url, meta }));
+  const failure = (await Promise.allSettled(jobs)).find((job) => job.status === "rejected");
+  if (failure) throw failure.reason;
+}
+
+async function forward({
+  resend,
+  env,
+  email,
+  recipients,
+  meta,
+}: {
+  resend: Resend;
+  env: Env;
+  email: ReceivedEmail;
+  recipients: string[];
+  meta: Meta;
+}) {
+  const emailId = email.id;
   const listed = await resend.emails.receiving.attachments.list({ emailId, limit: 100 });
   if (listed.error) throw new Error(`attachments ${emailId}: ${listed.error.message}`);
   if (listed.data.has_more) console.warn({ event: "attachments_truncated", ...meta, kept: listed.data.data.length });
@@ -67,12 +94,7 @@ async function forward({ resend, env, emailId }: { resend: Resend; env: Env; ema
     headers: threading(email),
   };
 
-  const destinations = route({
-    // NOTE: Resend files one received email per envelope recipient; Cc'd addresses get their own copy.
-    recipients: [...email.received_for, ...email.to],
-    routes: env.ROUTES,
-    domain: env.DOMAIN,
-  });
+  const destinations = route({ recipients, routes: env.ROUTES, domain: env.DOMAIN });
 
   const deliveries = await Promise.allSettled(
     [...destinations].map(async ([to, local]) => {
