@@ -29,17 +29,17 @@ message, attachment payloads emptied (each part keeps its headers, so its name
 stays), as `message/rfc822` with
 `X-Posta-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>." + body)>`.
 
-5xx, 404 (hook not deployed yet), 408, 429 and network errors return 500, so
-Resend retries; a `SENT` record per email stops a second post once Django took
-it, and Django dedupes on Message-ID anyway. Other refusals (401 signature,
-413 too large, 422 no sender) are logged as `handoff_refused` and not retried;
-the owners still have the forward.
+401 (signature), 413 (too large even stripped) and 422 (no sender) are logged
+as `handoff_refused` and not retried; the owners still have the forward. Any
+other failure (5xx, a 404 before the hook is deployed, a network error) returns
+500, so Resend retries; a `SENT` record per email stops a second post once
+Django took it, and Django dedupes on Message-ID anyway.
 
 ## Develop
 
 ```sh
 pnpm install
-pnpm test        # routing
+pnpm test        # routing, staff hand-off, MIME stripping
 pnpm typecheck
 pnpm dev         # needs .dev.vars with the three secrets
 ```

@@ -152,6 +152,8 @@ for (const [name, reply] of [
   ["502 from the proxy", new Response("bad gateway", { status: 502 })],
   ["404 before Django has the hook", new Response("not found", { status: 404 })],
   ["429", new Response(null, { status: 429 })],
+  ["a redirect to a login page", new Response(null, { status: 302, headers: { location: "/login" } })],
+  ["400", new Response("bad request", { status: 400 })],
   ["a network error", new TypeError("fetch failed")],
 ] as const) {
   test(`a hand-off failing with ${name} is retried on redelivery without forwarding twice`, async () => {

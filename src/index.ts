@@ -36,7 +36,7 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
-type Meta = { emailId: string; from: string; to: string[]; subject: string };
+export type Meta = { emailId: string; from: string; to: string[]; subject: string };
 
 /** Forwarding and the staff hand-off each run to the end; the first failure then asks Resend to retry. */
 async function receive({ resend, env, emailId }: { resend: Resend; env: Env; emailId: string }) {
