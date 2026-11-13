@@ -21,14 +21,31 @@ message to its owners.
 catch-all. Case and `+tags` are ignored. Destinations on `zagrajmy.net` are
 rejected (loop).
 
+## Staff inbox
+
+Mail whose envelope recipient is `staff@` (not a Cc) is forwarded as above and
+also posted to Zagrajmy's staff case inbox at `vars.STAFF_MAIL_HOOK`: the raw
+message, attachment payloads emptied (each part keeps its headers, so its name
+stays), as `message/rfc822` with
+`X-Posta-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>." + body)>`.
+
+401 (signature), 413 (too large even stripped) and 422 (no sender) are logged
+as `handoff_refused` and not retried; the owners still have the forward. Any
+other failure (5xx, a 404 before the hook is deployed, a network error) returns
+500, so Resend retries; a `SENT` record per email stops a second post once
+Django took it, and Django dedupes on Message-ID anyway.
+
 ## Develop
 
 ```sh
 pnpm install
-pnpm test        # routing
+pnpm test        # routing, staff hand-off, MIME stripping
 pnpm typecheck
-pnpm dev         # needs .dev.vars with the two secrets
+pnpm dev         # needs .dev.vars with the three secrets
 ```
+
+`pnpm dev` posts staff@ mail to production unless `.dev.vars` also sets
+`STAFF_MAIL_HOOK`, for example to `http://localhost:8000/hooks/staff-mail`.
 
 ## Deploy
 
@@ -41,6 +58,7 @@ Secrets live only on the Worker:
 ```sh
 pnpm wrangler secret put RESEND_API_KEY        # full access: receiving API + send
 pnpm wrangler secret put RESEND_WEBHOOK_SECRET # from the Resend webhook page
+pnpm wrangler secret put STAFF_MAIL_WEBHOOK_SECRET # same as Django's STAFF_MAIL_WEBHOOK_SECRET
 ```
 
 Deploying from a laptop still works with `pnpm wrangler deploy` (not
